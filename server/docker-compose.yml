@@ -2,7 +2,7 @@ version: '3.8'
 services:
   shuki-server:
     build:
-      context: https://github.com/techbygiusi/SHUKI
+      context: https://github.com/techbygiusi/shuki.git#main
       dockerfile: server/Dockerfile
     container_name: shuki-server
     ports:
@@ -20,6 +20,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
 volumes:
   shuki-data:
     driver: local
