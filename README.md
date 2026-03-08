@@ -1,4 +1,4 @@
-# NoteSync
+# SHUKI
 
 A Markdown note-taking Electron app with real-time sync to a self-hosted Docker server.
 

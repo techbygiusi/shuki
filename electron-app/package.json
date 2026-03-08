@@ -1,7 +1,7 @@
 {
-  "name": "notesync",
+  "name": "shuki",
   "version": "1.0.0",
-  "description": "NoteSync — Markdown note-taking with real-time sync",
+  "description": "SHUKI — Markdown note-taking with real-time sync",
   "main": "dist/main/index.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",

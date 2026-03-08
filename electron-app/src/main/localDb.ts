@@ -22,7 +22,7 @@ export interface LocalDatabase {
 }
 
 export function initLocalDb(userDataPath: string): LocalDatabase {
-  const dbPath = path.join(userDataPath, 'notesync-local.db');
+  const dbPath = path.join(userDataPath, 'shuki-local.db');
   const db = new Database(dbPath);
 
   db.pragma('journal_mode = WAL');
