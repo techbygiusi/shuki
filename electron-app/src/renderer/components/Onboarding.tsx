@@ -12,9 +12,9 @@ export default function Onboarding({ onComplete }: Props) {
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleConnect = async () => {
-    const url = serverUrl.replace(/\/+$/, '');
-    if (!url || !apiKey) {
-      setErrorMsg('Please enter both server URL and API key');
+    const url = (serverUrl || 'http://localhost:3000').replace(/\/+$/, '');
+    if (!apiKey) {
+      setErrorMsg('Please enter your API key');
       setStatus('error');
       return;
     }
@@ -22,13 +22,23 @@ export default function Onboarding({ onComplete }: Props) {
     setStatus('checking');
     setErrorMsg('');
 
+    const timeout = setTimeout(() => {
+      setStatus('error');
+      setErrorMsg('Connection timed out (10s). Check your server URL.');
+    }, 10000);
+
     const result = await checkServerHealth(url, apiKey);
+    clearTimeout(timeout);
+
     if (result.ok) {
       setStatus('success');
       setTimeout(() => onComplete({ serverUrl: url, apiKey, offlineOnly: false }), 800);
+    } else if (result.errorType === 'auth') {
+      setStatus('error');
+      setErrorMsg('Invalid API Key. Check the key from your Docker logs.');
     } else {
       setStatus('error');
-      setErrorMsg('Could not connect to server. Check URL and API key.');
+      setErrorMsg('Could not connect to server. Check the URL and make sure the server is running.');
     }
   };
 
@@ -41,14 +51,14 @@ export default function Onboarding({ onComplete }: Props) {
         className="w-full max-w-md p-8"
         style={{
           backgroundColor: 'var(--bg-card)',
-          borderRadius: 'var(--radius-card)',
+          borderRadius: '16px',
           boxShadow: 'var(--shadow)',
         }}
       >
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
-            style={{ backgroundColor: '#F5C842' }}>
-            <span className="text-2xl">&#9998;</span>
+            style={{ backgroundColor: 'var(--accent-primary)' }}>
+            <span className="text-2xl font-bold text-white">S</span>
           </div>
           <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
             Welcome to SHUKI
@@ -67,14 +77,14 @@ export default function Onboarding({ onComplete }: Props) {
               type="url"
               value={serverUrl}
               onChange={(e) => setServerUrl(e.target.value)}
-              placeholder="https://notes.myserver.com"
-              className="w-full px-4 py-3 rounded-btn text-sm outline-none transition-all"
+              placeholder="http://localhost:3000"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
               style={{
                 backgroundColor: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
                 border: '1px solid var(--border)',
               }}
-              onFocus={(e) => (e.target.style.borderColor = '#F5C842')}
+              onFocus={(e) => (e.target.style.borderColor = 'var(--accent-primary)')}
               onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
             />
           </div>
@@ -87,25 +97,25 @@ export default function Onboarding({ onComplete }: Props) {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Paste your API key from Docker logs"
-              className="w-full px-4 py-3 rounded-btn text-sm outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
               style={{
                 backgroundColor: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
                 border: '1px solid var(--border)',
               }}
-              onFocus={(e) => (e.target.style.borderColor = '#F5C842')}
+              onFocus={(e) => (e.target.style.borderColor = 'var(--accent-primary)')}
               onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
             />
           </div>
 
           {status === 'error' && (
-            <div className="text-sm px-3 py-2 rounded-btn" style={{ backgroundColor: '#fee', color: '#c33' }}>
+            <div className="text-sm px-3 py-2 rounded-xl" style={{ backgroundColor: '#fee', color: '#c33' }}>
               {errorMsg}
             </div>
           )}
 
           {status === 'success' && (
-            <div className="text-sm px-3 py-2 rounded-btn" style={{ backgroundColor: '#efe', color: '#363' }}>
+            <div className="text-sm px-3 py-2 rounded-xl" style={{ backgroundColor: '#efe', color: '#363' }}>
               Connected successfully!
             </div>
           )}
@@ -113,9 +123,12 @@ export default function Onboarding({ onComplete }: Props) {
           <button
             onClick={handleConnect}
             disabled={status === 'checking'}
-            className="w-full py-3 rounded-btn text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: '#F5C842', color: '#1A1A1A' }}
+            className="w-full py-3 rounded-xl text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ backgroundColor: 'var(--accent-primary)', color: '#fff' }}
           >
+            {status === 'checking' && (
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            )}
             {status === 'checking' ? 'Connecting...' : 'Connect'}
           </button>
 
@@ -127,7 +140,7 @@ export default function Onboarding({ onComplete }: Props) {
 
           <button
             onClick={() => onComplete({ serverUrl: '', apiKey: '', offlineOnly: true })}
-            className="w-full py-3 rounded-btn text-sm font-medium transition-all hover:opacity-80"
+            className="w-full py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80"
             style={{
               backgroundColor: 'transparent',
               color: 'var(--text-secondary)',
