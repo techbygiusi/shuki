@@ -8,6 +8,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { initDatabase } from './database';
 import { createNotesRouter } from './routes/notes';
+import { createFoldersRouter } from './routes/folders';
 import { createImagesRouter } from './routes/images';
 import { createHealthRouter } from './routes/health';
 import { authMiddleware } from './middleware/auth';
@@ -73,109 +74,31 @@ app.get('/', (_req, res) => {
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: system-ui, -apple-system, sans-serif;
-    background: #FAFAF8;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
+    background: #F7F3EE; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
   }
   .card {
-    background: #fff;
-    max-width: 480px;
-    width: 100%;
-    border-radius: 16px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    padding: 40px 32px 32px;
+    background: #FDFAF7; max-width: 480px; width: 100%; border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(80,50,20,0.10); padding: 40px 32px 32px;
   }
-  h1 {
-    color: #7C5CBF;
-    font-size: 1.5rem;
-    margin-bottom: 4px;
-  }
-  .version {
-    color: #999;
-    font-size: 0.85rem;
-    margin-bottom: 24px;
-  }
-  .status {
-    font-size: 1.1rem;
-    margin-bottom: 28px;
-    padding: 12px 16px;
-    border-radius: 10px;
-    background: #f5f5f3;
-  }
-  h2 {
-    color: #7C5CBF;
-    font-size: 1.1rem;
-    margin-bottom: 16px;
-  }
-  .steps {
-    list-style: none;
-    counter-reset: step;
-  }
-  .steps li {
-    counter-increment: step;
-    margin-bottom: 14px;
-    padding-left: 32px;
-    position: relative;
-    line-height: 1.5;
-    font-size: 0.95rem;
-    color: #333;
-  }
-  .steps li::before {
-    content: counter(step);
-    position: absolute;
-    left: 0; top: 0;
-    width: 22px; height: 22px;
-    background: #F5C842;
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.75rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .url-block {
-    background: #f5f5f3;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-family: monospace;
-    font-size: 0.85rem;
-    margin: 8px 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    word-break: break-all;
-  }
-  .url-block button {
-    flex-shrink: 0;
-    background: #F5C842;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    color: #fff;
-  }
+  h1 { color: #C17F3A; font-size: 1.5rem; margin-bottom: 4px; }
+  .version { color: #7A6A55; font-size: 0.85rem; margin-bottom: 24px; }
+  .status { font-size: 1.1rem; margin-bottom: 28px; padding: 12px 16px; border-radius: 10px; background: #EDE8E0; }
+  h2 { color: #C17F3A; font-size: 1.1rem; margin-bottom: 16px; }
+  .steps { list-style: none; counter-reset: step; }
+  .steps li { counter-increment: step; margin-bottom: 14px; padding-left: 32px; position: relative; line-height: 1.5; font-size: 0.95rem; color: #2C2416; }
+  .steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 22px; height: 22px; background: #C17F3A; color: #fff; font-weight: 700; font-size: 0.75rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .url-block { background: #EDE8E0; border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 0.85rem; margin: 8px 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; word-break: break-all; }
+  .url-block button { flex-shrink: 0; background: #C17F3A; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; color: #fff; }
   .url-block button:hover { opacity: 0.85; }
-  footer {
-    text-align: center;
-    margin-top: 28px;
-    color: #bbb;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-  }
+  footer { text-align: center; margin-top: 28px; color: #7A6A55; font-size: 0.75rem; letter-spacing: 0.05em; }
 </style>
 </head>
 <body>
 <div class="card">
   <h1>SHUKI</h1>
-  <div class="version" id="version">Loading…</div>
-  <div class="status" id="status">⏳ Checking server health…</div>
+  <div class="version" id="version">Loading...</div>
+  <div class="status" id="status">Checking server health...</div>
   <h2>Connect with the Shuki App</h2>
   <ol class="steps">
     <li>Open Shuki</li>
@@ -185,7 +108,7 @@ app.get('/', (_req, res) => {
         <button onclick="navigator.clipboard.writeText(document.getElementById('server-url').textContent)">Copy</button>
       </div>
     </li>
-    <li>Enter your API Key <span style="color:#999;font-size:0.8rem">(found in Docker logs)</span></li>
+    <li>Enter your API Key <span style="color:#7A6A55;font-size:0.8rem">(found in Docker logs)</span></li>
     <li>Click <strong>Connect</strong></li>
   </ol>
   <footer>SHUKI &mdash; Self-hosted notes server</footer>
@@ -195,13 +118,11 @@ app.get('/', (_req, res) => {
   fetch('/api/health')
     .then(r => r.json())
     .then(d => {
-      document.getElementById('status').textContent = d.status === 'ok'
-        ? '✅ Server is healthy'
-        : '❌ Server is down';
+      document.getElementById('status').textContent = d.status === 'ok' ? 'Server is healthy' : 'Server is down';
       document.getElementById('version').textContent = 'v' + (d.version || '?');
     })
     .catch(() => {
-      document.getElementById('status').textContent = '❌ Server is down';
+      document.getElementById('status').textContent = 'Server is down';
       document.getElementById('version').textContent = '';
     });
 </script>
@@ -217,6 +138,7 @@ app.use('/api', authMiddleware(API_KEY));
 
 // Routes
 app.use('/api', createNotesRouter(db, io));
+app.use('/api', createFoldersRouter(db, io));
 app.use('/api', createImagesRouter(IMAGES_PATH));
 
 httpServer.listen(PORT, '0.0.0.0', () => {

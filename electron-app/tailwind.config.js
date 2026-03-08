@@ -11,7 +11,8 @@ module.exports = {
           card: 'var(--bg-card)',
         },
         accent: {
-          yellow: '#F5C842',
+          primary: 'var(--accent-primary)',
+          soft: 'var(--accent-soft)',
           purple: '#7C5CBF',
         },
         txt: {
@@ -21,8 +22,8 @@ module.exports = {
         bdr: 'var(--border)',
       },
       fontFamily: {
-        display: ['Fraunces', 'serif'],
-        sans: ['DM Sans', 'sans-serif'],
+        display: ['Lora', 'serif'],
+        sans: ['IBM Plex Sans', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       borderRadius: {
@@ -30,7 +31,7 @@ module.exports = {
         btn: '12px',
       },
       boxShadow: {
-        card: '0 4px 20px rgba(0,0,0,0.08)',
+        card: '0 4px 24px rgba(80,50,20,0.10)',
       },
     },
   },

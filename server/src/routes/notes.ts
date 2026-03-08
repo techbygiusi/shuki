@@ -9,7 +9,7 @@ export function createNotesRouter(db: Database.Database, io: SocketIOServer): Ro
 
   router.get('/notes', (_req: Request, res: Response) => {
     const notes = db.prepare(
-      'SELECT id, title, content, tags, created_at, updated_at FROM notes WHERE deleted = 0 ORDER BY updated_at DESC'
+      'SELECT id, title, content, tags, folder_id, created_at, updated_at FROM notes WHERE deleted = 0 ORDER BY updated_at DESC'
     ).all() as NoteRow[];
 
     res.json(notes.map(n => ({
@@ -17,6 +17,7 @@ export function createNotesRouter(db: Database.Database, io: SocketIOServer): Ro
       title: n.title,
       content: n.content,
       tags: JSON.parse(n.tags),
+      folderId: n.folder_id,
       createdAt: n.created_at,
       updatedAt: n.updated_at,
       size: Buffer.byteLength(n.content, 'utf-8'),
@@ -38,35 +39,35 @@ export function createNotesRouter(db: Database.Database, io: SocketIOServer): Ro
       title: note.title,
       content: note.content,
       tags: JSON.parse(note.tags),
+      folderId: note.folder_id,
       createdAt: note.created_at,
       updatedAt: note.updated_at,
     });
   });
 
   router.post('/notes', (req: Request, res: Response) => {
-    const { id, title, content, tags } = req.body;
+    const { id, title, content, tags, folderId } = req.body;
     const noteId = id || uuidv4();
     const now = new Date().toISOString();
 
     db.prepare(
-      'INSERT INTO notes (id, title, content, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run(noteId, title || 'Untitled', content || '', JSON.stringify(tags || []), now, now);
+      'INSERT INTO notes (id, title, content, tags, folder_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(noteId, title || 'Untitled', content || '', JSON.stringify(tags || []), folderId || null, now, now);
 
-    const note = { id: noteId, title: title || 'Untitled', content: content || '', tags: tags || [], createdAt: now, updatedAt: now };
+    const note = { id: noteId, title: title || 'Untitled', content: content || '', tags: tags || [], folderId: folderId || null, createdAt: now, updatedAt: now };
     io.emit('note:updated', note);
     res.status(201).json(note);
   });
 
   router.put('/notes/:id', (req: Request, res: Response) => {
-    const { title, content, tags } = req.body;
+    const { title, content, tags, folderId } = req.body;
     const now = new Date().toISOString();
     const existing = db.prepare('SELECT id FROM notes WHERE id = ?').get(req.params.id) as NoteRow | undefined;
 
     if (!existing) {
-      // Upsert: create if not exists
       db.prepare(
-        'INSERT INTO notes (id, title, content, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-      ).run(req.params.id, title || 'Untitled', content || '', JSON.stringify(tags || []), now, now);
+        'INSERT INTO notes (id, title, content, tags, folder_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(req.params.id, title || 'Untitled', content || '', JSON.stringify(tags || []), folderId ?? null, now, now);
     } else {
       const updates: string[] = [];
       const params: unknown[] = [];
@@ -74,6 +75,7 @@ export function createNotesRouter(db: Database.Database, io: SocketIOServer): Ro
       if (title !== undefined) { updates.push('title = ?'); params.push(title); }
       if (content !== undefined) { updates.push('content = ?'); params.push(content); }
       if (tags !== undefined) { updates.push('tags = ?'); params.push(JSON.stringify(tags)); }
+      if (folderId !== undefined) { updates.push('folder_id = ?'); params.push(folderId); }
       updates.push('updated_at = ?');
       params.push(now);
       params.push(req.params.id);
@@ -87,6 +89,7 @@ export function createNotesRouter(db: Database.Database, io: SocketIOServer): Ro
       title: note.title,
       content: note.content,
       tags: JSON.parse(note.tags),
+      folderId: note.folder_id,
       createdAt: note.created_at,
       updatedAt: note.updated_at,
     };

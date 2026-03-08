@@ -1,29 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg-primary: #FAFAF8;
-  --bg-secondary: #F2F0EC;
-  --bg-card: #FFFFFF;
-  --accent-yellow: #F5C842;
+  --bg-primary: #F7F3EE;
+  --bg-secondary: #EDE8E0;
+  --bg-card: #FDFAF7;
+  --bg-sidebar: #EDE8E0;
+  --accent-primary: #C17F3A;
+  --accent-soft: #F0D9B5;
   --accent-purple: #7C5CBF;
-  --text-primary: #1A1A1A;
-  --text-secondary: #6B6B6B;
-  --border: #E8E4DC;
-  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --text-primary: #2C2416;
+  --text-secondary: #7A6A55;
+  --border: #DDD5C8;
+  --shadow: 0 4px 24px rgba(80,50,20,0.10);
   --radius-card: 16px;
   --radius-button: 12px;
 }
 
 .dark {
-  --bg-primary: #16151A;
-  --bg-secondary: #1F1D26;
-  --bg-card: #2A2733;
-  --text-primary: #F0EDE8;
-  --text-secondary: #9B97A8;
-  --border: #38354A;
-  --shadow: 0 4px 20px rgba(0,0,0,0.3);
+  --bg-primary: #1C1814;
+  --bg-secondary: #252018;
+  --bg-card: #2E2820;
+  --bg-sidebar: #201C16;
+  --accent-primary: #C17F3A;
+  --accent-soft: #3D2E1A;
+  --accent-purple: #7C5CBF;
+  --text-primary: #F2EBE0;
+  --text-secondary: #A89880;
+  --border: #3D3528;
+  --shadow: 0 4px 24px rgba(0,0,0,0.30);
 }
 
 * {
@@ -33,7 +41,7 @@
 }
 
 body {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'IBM Plex Sans', sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -47,51 +55,182 @@ body {
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
+  background: var(--accent-primary);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
 
-/* Markdown editor overrides */
-.w-md-editor {
-  background-color: var(--bg-card) !important;
-  color: var(--text-primary) !important;
-  border: none !important;
-  box-shadow: none !important;
+/* Font classes */
+.font-display {
+  font-family: 'Lora', serif;
 }
-.w-md-editor-text-pre > code,
-.w-md-editor-text-input,
-.w-md-editor-text textarea {
-  font-family: 'JetBrains Mono', monospace !important;
-  font-size: inherit !important;
-}
-.wmde-markdown {
-  font-family: 'DM Sans', sans-serif !important;
-  background-color: transparent !important;
-  color: var(--text-primary) !important;
-}
-.wmde-markdown h1, .wmde-markdown h2, .wmde-markdown h3,
-.wmde-markdown h4, .wmde-markdown h5, .wmde-markdown h6 {
-  font-family: 'Fraunces', serif !important;
-  color: var(--text-primary) !important;
-}
-.wmde-markdown code {
-  font-family: 'JetBrains Mono', monospace !important;
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
 }
 
-/* Transitions */
+/* TipTap editor styles */
+.tiptap-editor {
+  outline: none;
+  min-height: 60vh;
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+.tiptap-editor h1,
+.tiptap-editor h2,
+.tiptap-editor h3,
+.tiptap-editor h4,
+.tiptap-editor h5,
+.tiptap-editor h6 {
+  font-family: 'Lora', serif;
+  color: var(--text-primary);
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+}
+
+.tiptap-editor h1 { font-size: 1.75rem; font-weight: 700; }
+.tiptap-editor h2 { font-size: 1.4rem; font-weight: 600; }
+.tiptap-editor h3 { font-size: 1.15rem; font-weight: 600; }
+
+.tiptap-editor p {
+  margin-bottom: 0.5em;
+}
+
+.tiptap-editor ul,
+.tiptap-editor ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.tiptap-editor li {
+  margin-bottom: 0.2em;
+}
+
+.tiptap-editor blockquote {
+  border-left: 3px solid var(--accent-primary);
+  padding-left: 1em;
+  margin: 0.8em 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.tiptap-editor pre {
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0.8em 0;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875em;
+}
+
+.tiptap-editor code {
+  font-family: 'JetBrains Mono', monospace;
+  background-color: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+
+.tiptap-editor pre code {
+  background: none;
+  padding: 0;
+}
+
+.tiptap-editor a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+.tiptap-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 0.8em 0;
+}
+
+.tiptap-editor hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5em 0;
+}
+
+/* Task list styles */
+.tiptap-editor ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap-editor ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tiptap-editor ul[data-type="taskList"] li label {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.tiptap-editor ul[data-type="taskList"] li label input[type="checkbox"] {
+  accent-color: var(--accent-primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.tiptap-editor ul[data-type="taskList"] li div {
+  flex: 1;
+}
+
+.tiptap-editor ul[data-type="taskList"] li[data-checked="true"] > div > p {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+/* Placeholder */
+.tiptap-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+  font-family: 'Lora', serif;
+}
+
+/* Syntax highlighting */
+.hljs-keyword { color: #C17F3A; }
+.hljs-string { color: #22c55e; }
+.hljs-comment { color: var(--text-secondary); font-style: italic; }
+.hljs-number { color: #7C5CBF; }
+.hljs-function { color: #C17F3A; }
+.hljs-title { color: var(--accent-primary); }
+.hljs-built_in { color: #7C5CBF; }
+
+/* Animations */
 .fade-in {
   animation: fadeIn 150ms ease;
 }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
 }

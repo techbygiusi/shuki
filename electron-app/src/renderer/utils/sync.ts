@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { io, Socket } from 'socket.io-client';
-import { Note } from '../types';
+import { Note, Folder } from '../types';
 
 let apiClient: AxiosInstance | null = null;
 let socket: Socket | null = null;
@@ -23,7 +23,9 @@ export function initSocket(
   apiKey: string,
   onNoteUpdated: (note: Note) => void,
   onNoteDeleted: (data: { id: string }) => void,
-  onClientsCount: (count: number) => void
+  onClientsCount: (count: number) => void,
+  onFolderUpdated?: (folder: Folder) => void,
+  onFolderDeleted?: (data: { id: string }) => void,
 ): Socket {
   if (socket) socket.disconnect();
 
@@ -37,6 +39,8 @@ export function initSocket(
   socket.on('note:updated', onNoteUpdated);
   socket.on('note:deleted', onNoteDeleted);
   socket.on('clients:count', onClientsCount);
+  if (onFolderUpdated) socket.on('folder:updated', onFolderUpdated);
+  if (onFolderDeleted) socket.on('folder:deleted', onFolderDeleted);
 
   return socket;
 }
@@ -52,18 +56,26 @@ export function disconnectSocket(): void {
   }
 }
 
-export async function checkServerHealth(serverUrl: string, apiKey: string): Promise<{
+export async function checkServerHealth(serverUrl: string, _apiKey: string): Promise<{
   ok: boolean;
   data?: { status: string; clients: number; storage: { free: number; total: number; path: string }; version: string };
+  errorType?: 'network' | 'auth' | 'unknown';
 }> {
   try {
     const res = await axios.get(`${serverUrl}/api/health`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-      timeout: 5000,
+      timeout: 10000,
     });
     return { ok: true, data: res.data };
-  } catch {
-    return { ok: false };
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      if (err.response?.status === 403) {
+        return { ok: false, errorType: 'auth' };
+      }
+      if (!err.response) {
+        return { ok: false, errorType: 'network' };
+      }
+    }
+    return { ok: false, errorType: 'unknown' };
   }
 }
 
@@ -74,8 +86,21 @@ export async function fetchNotes(api: AxiosInstance): Promise<Note[]> {
     title: n.title as string,
     content: n.content as string,
     tags: (n.tags as string[]) || [],
+    folderId: (n.folderId as string | null) || null,
     createdAt: n.createdAt as string,
     updatedAt: n.updatedAt as string,
+    synced: true,
+  }));
+}
+
+export async function fetchFolders(api: AxiosInstance): Promise<Folder[]> {
+  const res = await api.get('/api/folders');
+  return res.data.map((f: Record<string, unknown>) => ({
+    id: f.id as string,
+    name: f.name as string,
+    sortOrder: (f.sortOrder as number) || 0,
+    createdAt: f.createdAt as string,
+    updatedAt: f.updatedAt as string,
     synced: true,
   }));
 }
@@ -85,6 +110,7 @@ export async function syncNote(api: AxiosInstance, note: Note): Promise<Note> {
     title: note.title,
     content: note.content,
     tags: note.tags,
+    folderId: note.folderId,
   });
   return { ...res.data, synced: true };
 }
@@ -95,10 +121,32 @@ export async function createNoteOnServer(api: AxiosInstance, note: Note): Promis
     title: note.title,
     content: note.content,
     tags: note.tags,
+    folderId: note.folderId,
   });
   return { ...res.data, synced: true };
 }
 
 export async function deleteNoteOnServer(api: AxiosInstance, id: string): Promise<void> {
   await api.delete(`/api/notes/${id}`);
+}
+
+export async function syncFolder(api: AxiosInstance, folder: Folder): Promise<Folder> {
+  const res = await api.put(`/api/folders/${folder.id}`, {
+    name: folder.name,
+    sortOrder: folder.sortOrder,
+  });
+  return { ...res.data, synced: true };
+}
+
+export async function createFolderOnServer(api: AxiosInstance, folder: Folder): Promise<Folder> {
+  const res = await api.post('/api/folders', {
+    id: folder.id,
+    name: folder.name,
+    sortOrder: folder.sortOrder,
+  });
+  return { ...res.data, synced: true };
+}
+
+export async function deleteFolderOnServer(api: AxiosInstance, id: string): Promise<void> {
+  await api.delete(`/api/folders/${id}`);
 }
