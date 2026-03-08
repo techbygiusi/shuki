@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #FAFAF8;
+  --bg-secondary: #F2F0EC;
+  --bg-card: #FFFFFF;
+  --accent-yellow: #F5C842;
+  --accent-purple: #7C5CBF;
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6B6B;
+  --border: #E8E4DC;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --radius-card: 16px;
+  --radius-button: 12px;
+}
+
+.dark {
+  --bg-primary: #16151A;
+  --bg-secondary: #1F1D26;
+  --bg-card: #2A2733;
+  --text-primary: #F0EDE8;
+  --text-secondary: #9B97A8;
+  --border: #38354A;
+  --shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Markdown editor overrides */
+.w-md-editor {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.w-md-editor-text-pre > code,
+.w-md-editor-text-input,
+.w-md-editor-text textarea {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: inherit !important;
+}
+.wmde-markdown {
+  font-family: 'DM Sans', sans-serif !important;
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+}
+.wmde-markdown h1, .wmde-markdown h2, .wmde-markdown h3,
+.wmde-markdown h4, .wmde-markdown h5, .wmde-markdown h6 {
+  font-family: 'Fraunces', serif !important;
+  color: var(--text-primary) !important;
+}
+.wmde-markdown code {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* Transitions */
+.fade-in {
+  animation: fadeIn 150ms ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

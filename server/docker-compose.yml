@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  notesync-server:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - notesync-data:/data
+    environment:
+      - PORT=3000
+      - DATA_PATH=/data
+    restart: unless-stopped
+
+volumes:
+  notesync-data:
