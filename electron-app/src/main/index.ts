@@ -18,6 +18,8 @@ function getThemeBg(): string {
 function createWindow() {
   const bounds = store.get('windowBounds') as { width?: number; height?: number; x?: number; y?: number } | undefined;
 
+  const iconPath = path.join(__dirname, '..', '..', 'assets', 'icon.png');
+
   mainWindow = new BrowserWindow({
     width: bounds?.width || 1280,
     height: bounds?.height || 800,
@@ -29,6 +31,7 @@ function createWindow() {
     frame: true,
     backgroundColor: getThemeBg(),
     autoHideMenuBar: true,
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, '..', 'main', 'preload.js'),
       contextIsolation: true,

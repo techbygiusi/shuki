@@ -64,6 +64,7 @@ const wsState = setupWebSocket(io, API_KEY, db);
 
 // Browser landing page
 app.get('/', (_req, res) => {
+  res.set('Content-Security-Policy', "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'");
   res.type('html').send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,7 +100,7 @@ app.get('/', (_req, res) => {
 <div class="card">
   <h1>SHUKI</h1>
   <div class="version">v1.0.0</div>
-  <div class="status">\\u2705 Server is online</div>
+  <div class="status">✅ Server is online</div>
   <h2>Connect with the Shuki App</h2>
   <ol class="steps">
     <li>Open Shuki</li>

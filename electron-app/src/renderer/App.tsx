@@ -5,7 +5,7 @@ import {
   loadSettings, saveSettings, loadNotesFromLocal, saveNoteLocal, deleteNoteLocal,
   getPendingNotes, markNoteSynced, loadFoldersFromLocal, saveFolderLocal, deleteFolderLocal,
   markFolderSynced, addToSyncQueue, getSyncQueue, removeSyncQueueItem, loadShortcuts,
-  loadUIState, saveUIState,
+  loadUIState, saveUIState, cleanupOrphanedImages,
 } from './utils/storage';
 import {
   initApi, initSocket, checkServerHealth, fetchNotes, fetchFolders,
@@ -117,7 +117,10 @@ export default function App() {
       }
       setServerStatus({ connected: true, lastSync: new Date().toISOString() });
       setSyncState('synced');
-    }).catch(() => {
+      // Push any pending local changes to server
+      syncPendingChanges();
+    }).catch((err) => {
+      console.error('[Sync] Initial fetch failed:', err);
       setServerStatus({ connected: false });
       setSyncState('offline');
     });
@@ -291,6 +294,9 @@ export default function App() {
       const updated = { ...note, ...updates, updatedAt: now, synced: false };
       await saveNoteLocal(updated);
 
+      // Cleanup orphaned images after saving
+      cleanupOrphanedImages(state.notes);
+
       const api = getApi();
       if (api && !state.settings.offlineOnly) {
         try {
@@ -415,19 +421,19 @@ export default function App() {
 
     setSyncState('syncing');
 
-    // Sync pending notes
+    // Sync pending notes (unsynced in local db)
     const pending = await getPendingNotes();
     for (const note of pending) {
       try {
         await syncNote(api, note);
         await markNoteSynced(note.id);
         updateNote(note.id, { synced: true });
-      } catch {
-        // Will retry
+      } catch (err) {
+        console.error(`[Sync] Failed to sync note "${note.title}" (${note.id}):`, err);
       }
     }
 
-    // Process sync queue
+    // Process sync queue items one by one
     const queue = await getSyncQueue();
     for (const item of queue) {
       try {
@@ -435,8 +441,13 @@ export default function App() {
           if (item.action === 'delete') {
             await deleteNoteOnServer(api, item.entityId);
           } else {
-            const payload = JSON.parse(item.payload) as Note;
+            // Use latest local data if available, fall back to queued payload
+            const latestNotes = await loadNotesFromLocal();
+            const latestNote = latestNotes.find(n => n.id === item.entityId);
+            const payload = latestNote || (JSON.parse(item.payload) as Note);
             await syncNote(api, payload);
+            await markNoteSynced(item.entityId);
+            updateNote(item.entityId, { synced: true });
           }
         } else if (item.entityType === 'folder') {
           if (item.action === 'delete') {
@@ -447,14 +458,17 @@ export default function App() {
           }
         }
         await removeSyncQueueItem(item.id);
-      } catch {
-        // Will retry next cycle
+      } catch (err) {
+        console.error(`[Sync] Failed to process queue item ${item.id} (${item.entityType}/${item.action}):`, err);
+        // Will retry on next sync cycle (30s)
       }
     }
 
     const remaining = await getSyncQueue();
     const pendingRemaining = await getPendingNotes();
-    if (remaining.length + pendingRemaining.length === 0) {
+    const total = remaining.length + pendingRemaining.length;
+    setPendingChanges(total);
+    if (total === 0) {
       setSyncState('synced');
       setServerStatus({ lastSync: new Date().toISOString() });
     } else {

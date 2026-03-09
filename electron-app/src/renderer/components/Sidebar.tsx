@@ -126,7 +126,14 @@ export default function Sidebar({
       {/* Header */}
       <div className="p-4 flex items-center gap-3" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
         <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
-          style={{ backgroundColor: 'var(--accent-primary)', color: '#fff' }}>
+          style={{
+            background: 'linear-gradient(135deg, #D4943F 0%, #C17F3A 50%, #A86B2E 100%)',
+            color: '#fff',
+            boxShadow: '0 2px 6px rgba(193,127,58,0.35)',
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontSize: '16px',
+            letterSpacing: '-0.5px',
+          }}>
           S
         </div>
         <span className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>

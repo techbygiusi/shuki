@@ -315,6 +315,25 @@ export async function deleteLocalImage(filename: string): Promise<void> {
   }
 }
 
+// --- Image cleanup ---
+export async function cleanupOrphanedImages(allNotes: { content: string }[]): Promise<void> {
+  if (!isElectron()) return;
+  try {
+    const filenames = await listLocalImages();
+    const allContent = allNotes.map((n) => n.content).join('\n');
+    for (const filename of filenames) {
+      const basePath = await getImagesPath();
+      const fullPath = `${basePath}/${filename}`;
+      // Check if this image is referenced by any note
+      if (!allContent.includes(filename) && !allContent.includes(encodeURIComponent(fullPath))) {
+        await deleteLocalImage(filename);
+      }
+    }
+  } catch {
+    // Silently fail cleanup
+  }
+}
+
 // --- Reset all settings ---
 export async function resetAllSettings(): Promise<void> {
   if (isElectron()) {

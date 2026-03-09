@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useEffect, useState } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import React, { useCallback, useMemo, useEffect, useState, useRef } from 'react';
+import { useEditor, EditorContent, NodeViewWrapper, NodeViewProps, ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -13,6 +13,62 @@ import { useStore } from '../store/useStore';
 import { Note, Folder } from '../types';
 
 const lowlight = createLowlight(common);
+
+function ImageNodeView({ node, selected, deleteNode }: NodeViewProps) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <NodeViewWrapper as="span" className="tiptap-image-wrapper" style={{ position: 'relative', display: 'inline-block' }}>
+      <span
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{ position: 'relative', display: 'inline-block' }}
+      >
+        <img
+          src={node.attrs.src}
+          alt={node.attrs.alt || ''}
+          title={node.attrs.title || undefined}
+          style={{
+            maxWidth: '100%',
+            outline: selected ? '3px solid #C17F3A' : 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+          }}
+        />
+        {(hovered || selected) && (
+          <button
+            onClick={(e) => { e.stopPropagation(); deleteNode(); }}
+            style={{
+              position: 'absolute',
+              top: 4,
+              right: 4,
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              background: 'rgba(0,0,0,0.6)',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              lineHeight: 1,
+            }}
+            title="Delete image"
+          >
+            &times;
+          </button>
+        )}
+      </span>
+    </NodeViewWrapper>
+  );
+}
+
+const SelectableImage = Image.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageNodeView);
+  },
+});
 
 interface Props {
   note: Note;
@@ -42,7 +98,7 @@ export default function Editor({ note, onChange, folders }: Props) {
       }),
       Underline,
       Link.configure({ openOnClick: false }),
-      Image.configure({ inline: true, allowBase64: true }),
+      SelectableImage.configure({ inline: true, allowBase64: true }),
       Placeholder.configure({ placeholder: 'Start writing...' }),
       TaskList,
       TaskItem.configure({ nested: true }),

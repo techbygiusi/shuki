@@ -19,12 +19,15 @@ module.exports = {
   mac: {
     target: ['dmg', 'zip'],
     category: 'public.app-category.productivity',
+    icon: 'assets/icon.png',
   },
   win: {
     target: ['nsis', 'zip'],
+    icon: 'assets/icon.ico',
   },
   linux: {
     target: ['AppImage', 'deb'],
     category: 'Office',
+    icon: 'assets/icon.png',
   },
 };

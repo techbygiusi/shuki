@@ -84,7 +84,9 @@ export default function Gallery({ onClose, onOpenNote }: Props) {
       }
     }
 
-    setImages(galleryImages);
+    // Filter out unlinked images (no note reference)
+    const linkedImages = galleryImages.filter((img) => img.noteId !== null);
+    setImages(linkedImages);
     } catch (err) {
       setError('Could not load images. Make sure the app has access to the images directory.');
       setImages([]);
