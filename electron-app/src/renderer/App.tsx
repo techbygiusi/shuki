@@ -5,6 +5,7 @@ import {
   loadSettings, saveSettings, loadNotesFromLocal, saveNoteLocal, deleteNoteLocal,
   getPendingNotes, markNoteSynced, loadFoldersFromLocal, saveFolderLocal, deleteFolderLocal,
   markFolderSynced, addToSyncQueue, getSyncQueue, removeSyncQueueItem, loadShortcuts,
+  loadUIState, saveUIState,
 } from './utils/storage';
 import {
   initApi, initSocket, checkServerHealth, fetchNotes, fetchFolders,
@@ -28,7 +29,8 @@ export default function App() {
     settings, setSettings, isOnboarding, setIsOnboarding,
     notes, setNotes, addNote, updateNote, removeNote,
     folders, setFolders, addFolder, updateFolder, removeFolder,
-    activeNoteId, setActiveNoteId, showSettings, setShowSettings,
+    activeNoteId, setActiveNoteId, activeFolderId, setActiveFolderId,
+    showSettings, setShowSettings,
     showGallery, setShowGallery,
     setServerStatus, editorMode, setEditorMode,
     syncState, setSyncState, setPendingChanges,
@@ -57,8 +59,18 @@ export default function App() {
         }));
         setShortcuts(updated);
       }
+
+      // Restore UI state (last selected note/folder)
+      const uiState = await loadUIState();
+      if (uiState.activeNoteId) setActiveNoteId(uiState.activeNoteId);
+      if (uiState.activeFolderId) setActiveFolderId(uiState.activeFolderId);
     })();
   }, []);
+
+  // Persist UI state when active note/folder changes
+  useEffect(() => {
+    saveUIState({ activeNoteId, activeFolderId });
+  }, [activeNoteId, activeFolderId]);
 
   // Apply theme changes
   useEffect(() => {

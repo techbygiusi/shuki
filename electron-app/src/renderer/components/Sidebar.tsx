@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Note, Folder, SyncState } from '../types';
+import { Note, Folder } from '../types';
 
 interface Props {
   onNewNote: () => void;
@@ -21,7 +21,22 @@ export default function Sidebar({
     serverStatus, syncState, pendingChanges, contextMenu, setContextMenu,
   } = useStore();
 
-  const filteredNotes = useStore((s) => s.getFilteredNotes());
+  const filteredNotes = useMemo(() => {
+    let filtered = notes;
+    if (activeFolderId) {
+      filtered = filtered.filter((n) => n.folderId === activeFolderId);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (n) =>
+          n.title.toLowerCase().includes(q) ||
+          n.content.toLowerCase().includes(q) ||
+          n.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return filtered;
+  }, [notes, activeFolderId, searchQuery]);
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -204,8 +219,17 @@ export default function Sidebar({
                   borderLeft: isActive ? '3px solid var(--accent-primary)' : '3px solid transparent',
                 }}
                 onClick={() => {
-                  setActiveFolderId(folder.id);
-                  toggleCollapse(folder.id);
+                  if (activeFolderId === folder.id) {
+                    toggleCollapse(folder.id);
+                  } else {
+                    setActiveFolderId(folder.id);
+                    // Expand folder when selecting it
+                    setCollapsedFolders((prev) => {
+                      const next = new Set(prev);
+                      next.delete(folder.id);
+                      return next;
+                    });
+                  }
                 }}
                 onDoubleClick={(e) => {
                   e.stopPropagation();

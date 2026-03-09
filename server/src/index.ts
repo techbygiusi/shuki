@@ -69,7 +69,7 @@ app.get('/', (_req, res) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SHUKI - Server Status</title>
+<title>SHUKI - Server is online</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -83,12 +83,13 @@ app.get('/', (_req, res) => {
   }
   h1 { color: #C17F3A; font-size: 1.5rem; margin-bottom: 4px; }
   .version { color: #7A6A55; font-size: 0.85rem; margin-bottom: 24px; }
-  .status { font-size: 1.1rem; margin-bottom: 28px; padding: 12px 16px; border-radius: 10px; background: #EDE8E0; }
+  .status { font-size: 1.1rem; margin-bottom: 28px; padding: 12px 16px; border-radius: 10px; color: #166534; background: #dcfce7; }
   h2 { color: #C17F3A; font-size: 1.1rem; margin-bottom: 16px; }
   .steps { list-style: none; counter-reset: step; }
   .steps li { counter-increment: step; margin-bottom: 14px; padding-left: 32px; position: relative; line-height: 1.5; font-size: 0.95rem; color: #2C2416; }
   .steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 22px; height: 22px; background: #C17F3A; color: #fff; font-weight: 700; font-size: 0.75rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
   .url-block { background: #EDE8E0; border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 0.85rem; margin: 8px 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; word-break: break-all; }
+  .url-block input { flex: 1; background: none; border: none; font-family: monospace; font-size: 0.85rem; color: #2C2416; outline: none; }
   .url-block button { flex-shrink: 0; background: #C17F3A; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; color: #fff; }
   .url-block button:hover { opacity: 0.85; }
   footer { text-align: center; margin-top: 28px; color: #7A6A55; font-size: 0.75rem; letter-spacing: 0.05em; }
@@ -97,15 +98,15 @@ app.get('/', (_req, res) => {
 <body>
 <div class="card">
   <h1>SHUKI</h1>
-  <div class="version" id="version">Loading...</div>
-  <div class="status" id="status">Checking server health...</div>
+  <div class="version">v1.0.0</div>
+  <div class="status">\\u2705 Server is online</div>
   <h2>Connect with the Shuki App</h2>
   <ol class="steps">
     <li>Open Shuki</li>
     <li>Enter this server URL:
       <div class="url-block">
-        <span id="server-url"></span>
-        <button onclick="navigator.clipboard.writeText(document.getElementById('server-url').textContent)">Copy</button>
+        <input type="text" id="url" readonly />
+        <button id="copy-btn">Copy</button>
       </div>
     </li>
     <li>Enter your API Key <span style="color:#7A6A55;font-size:0.8rem">(found in Docker logs)</span></li>
@@ -114,47 +115,13 @@ app.get('/', (_req, res) => {
   <footer>SHUKI &mdash; Self-hosted notes server</footer>
 </div>
 <script>
-  (function() {
-    var urlEl = document.getElementById('server-url');
-    var statusEl = document.getElementById('status');
-    var versionEl = document.getElementById('version');
-    var serverUrl = window.location.origin;
-    urlEl.textContent = serverUrl;
-
-    function checkHealth() {
-      try {
-        fetch('/api/health')
-          .then(function(r) { return r.json(); })
-          .then(function(d) {
-            if (d.status === 'ok') {
-              statusEl.textContent = '\\u2705 Server is healthy';
-              statusEl.style.color = '#166534';
-              statusEl.style.background = '#dcfce7';
-              versionEl.textContent = 'v' + (d.version || '1.0.0');
-            } else {
-              statusEl.textContent = '\\u274c Server unreachable';
-              statusEl.style.color = '#991b1b';
-              statusEl.style.background = '#fee2e2';
-              setTimeout(checkHealth, 3000);
-            }
-          })
-          .catch(function() {
-            statusEl.textContent = '\\u274c Server unreachable';
-            statusEl.style.color = '#991b1b';
-            statusEl.style.background = '#fee2e2';
-            versionEl.textContent = '';
-            setTimeout(checkHealth, 3000);
-          });
-      } catch(e) {
-        statusEl.textContent = '\\u274c Server unreachable';
-        statusEl.style.color = '#991b1b';
-        statusEl.style.background = '#fee2e2';
-        setTimeout(checkHealth, 3000);
-      }
-    }
-
-    checkHealth();
-  })();
+  document.getElementById('url').value = window.location.origin;
+  document.getElementById('copy-btn').addEventListener('click', function() {
+    navigator.clipboard.writeText(window.location.origin);
+    this.textContent = 'Copied!';
+    var btn = this;
+    setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+  });
 </script>
 </body>
 </html>`);

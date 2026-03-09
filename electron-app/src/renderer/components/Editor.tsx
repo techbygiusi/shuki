@@ -42,7 +42,7 @@ export default function Editor({ note, onChange, folders }: Props) {
       }),
       Underline,
       Link.configure({ openOnClick: false }),
-      Image.configure({ inline: true }),
+      Image.configure({ inline: true, allowBase64: true }),
       Placeholder.configure({ placeholder: 'Start writing...' }),
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -99,16 +99,23 @@ export default function Editor({ note, onChange, folders }: Props) {
       const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
       if (window.electronAPI) {
+        // FIX 6: Save as file, reference via shuki:// protocol
         const savedPath = await window.electronAPI.images.save(arrayBuffer, filename);
-        const imgMd = `![${file.name}](shuki://${encodeURIComponent(savedPath)})\n`;
+        const imgSrc = `shuki://${encodeURIComponent(savedPath)}`;
+        const imgMd = `![${file.name}](${imgSrc})\n`;
         onChange(note.id, { content: note.content + imgMd });
         if (editor && editorMode === 'rich') {
-          editor.chain().focus().setImage({ src: `shuki://${encodeURIComponent(savedPath)}`, alt: file.name }).run();
+          editor.chain().focus().setImage({ src: imgSrc, alt: file.name }).run();
         }
       } else {
-        const base64 = await fileToBase64(file);
-        const imgMd = `![${file.name}](${base64})\n`;
+        // Browser fallback: use blob URL instead of base64 in content
+        const blob = new Blob([arrayBuffer], { type: file.type });
+        const blobUrl = URL.createObjectURL(blob);
+        const imgMd = `![${file.name}](${blobUrl})\n`;
         onChange(note.id, { content: note.content + imgMd });
+        if (editor && editorMode === 'rich') {
+          editor.chain().focus().setImage({ src: blobUrl, alt: file.name }).run();
+        }
       }
     }
   }
