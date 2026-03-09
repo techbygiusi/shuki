@@ -9,7 +9,11 @@ module.exports = {
     buildResources: 'build',
   },
   files: [
-    'dist/**/*',
+    {
+      from: 'dist',
+      to: 'dist',
+      filter: ['**/*'],
+    },
     'package.json',
   ],
   mac: {
