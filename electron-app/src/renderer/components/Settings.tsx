@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store/useStore';
-import { saveSettings, clearLocalCache, saveShortcuts, loadShortcuts } from '../utils/storage';
+import { saveSettings, clearLocalCache, saveShortcuts, loadShortcuts, resetAllSettings } from '../utils/storage';
 import { checkServerHealth } from '../utils/sync';
 import { applyTheme } from '../utils/theme';
 import { ThemeMode, ShortcutConfig } from '../types';
@@ -329,6 +329,20 @@ export default function Settings({ onClose }: Props) {
                   >
                     Reconnect
                   </button>
+                  <button
+                    onClick={() => {
+                      setSettings({ serverUrl: '', apiKey: '', offlineOnly: true });
+                      saveSettings({ serverUrl: '', apiKey: '', offlineOnly: true });
+                      setServerUrl('');
+                      setApiKey('');
+                      setServerStatus({ connected: false });
+                      toast.success('Disconnected from server');
+                    }}
+                    className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                    style={{ backgroundColor: '#ef4444', color: '#fff' }}
+                  >
+                    Disconnect
+                  </button>
                 </div>
               </div>
             </Card>
@@ -396,6 +410,25 @@ export default function Settings({ onClose }: Props) {
                   Clear Local Cache
                 </button>
               </div>
+            </Card>
+
+            <Card>
+              <h2 className="font-display text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+                Reset
+              </h2>
+              <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
+                Reset all settings, shortcuts, and UI preferences to their defaults. This will reload the app.
+              </p>
+              <button
+                onClick={async () => {
+                  await resetAllSettings();
+                  window.location.reload();
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                style={{ backgroundColor: '#ef4444', color: '#fff' }}
+              >
+                Reset All Settings to Defaults
+              </button>
             </Card>
           </>
         )}
