@@ -11,7 +11,11 @@ interface Props {
 }
 
 export default function Settings({ onClose }: Props) {
-  const { settings, setSettings, serverStatus, setServerStatus, notes, settingsTab, setSettingsTab, shortcuts, setShortcuts } = useStore();
+  const {
+    settings, setSettings, serverStatus, setServerStatus,
+    notes, settingsTab, setSettingsTab, shortcuts, setShortcuts,
+  } = useStore();
+
   const [serverUrl, setServerUrl] = useState(settings.serverUrl);
   const [apiKey, setApiKey] = useState(settings.apiKey);
   const [showApiKey, setShowApiKey] = useState(false);
@@ -28,7 +32,6 @@ export default function Settings({ onClose }: Props) {
     }
   }, []);
 
-  // Health check polling
   useEffect(() => {
     if (settingsTab !== 'server' || settings.offlineOnly || !settings.serverUrl) return;
     const interval = setInterval(() => {
@@ -42,7 +45,6 @@ export default function Settings({ onClose }: Props) {
     return () => clearInterval(interval);
   }, [settingsTab, settings.serverUrl, settings.apiKey, settings.offlineOnly]);
 
-  // Shortcut recording
   useEffect(() => {
     if (!recordingId) return;
     const handler = (e: KeyboardEvent) => {
@@ -53,22 +55,12 @@ export default function Settings({ onClose }: Props) {
       if (e.shiftKey) parts.push('Shift');
       if (e.altKey) parts.push('Alt');
       const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
-      if (!['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) {
-        parts.push(key);
-      }
+      if (!['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) parts.push(key);
       if (parts.length < 2) return;
       const combo = parts.join('+');
-
-      // Check for conflicts
       const conflict = shortcuts.find((s) => s.id !== recordingId && s.keys === combo);
-      if (conflict) {
-        toast.error(`Shortcut conflicts with "${conflict.label}"`);
-        return;
-      }
-
-      const updated = shortcuts.map((s) =>
-        s.id === recordingId ? { ...s, keys: combo } : s
-      );
+      if (conflict) { toast.error(`Conflicts with "${conflict.label}"`); return; }
+      const updated = shortcuts.map((s) => s.id === recordingId ? { ...s, keys: combo } : s);
       setShortcuts(updated);
       saveShortcutsToStore(updated);
       setRecordingId(null);
@@ -116,7 +108,7 @@ export default function Settings({ onClose }: Props) {
       toast.success('Server connection updated');
     } else if (result.errorType === 'auth') {
       setServerUpdateStatus('error');
-      setServerUpdateMsg('Invalid API Key');
+      setServerUpdateMsg('Invalid API key — check your server logs');
     } else if (result.errorType === 'network') {
       setServerUpdateStatus('error');
       setServerUpdateMsg('Server not reachable — check the URL');
@@ -157,45 +149,57 @@ export default function Settings({ onClose }: Props) {
 
   const tabs = [
     { id: 'shortcuts' as const, label: 'Shortcuts' },
-    { id: 'server' as const, label: 'Server' },
-    { id: 'general' as const, label: 'General' },
-    { id: 'about' as const, label: 'About' },
+    { id: 'server'    as const, label: 'Server'    },
+    { id: 'general'   as const, label: 'General'   },
+    { id: 'about'     as const, label: 'About'     },
   ];
 
   return (
-    <div className="h-screen overflow-y-auto fade-in" style={{ backgroundColor: 'var(--bg)' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: 40 }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
-            Settings
-          </h1>
-          <button
-            onClick={onClose}
-            style={{
-              backgroundColor: 'transparent',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              padding: '10px 20px',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: 'var(--font-ui)',
-            }}
-          >
-            Back
-          </button>
-        </div>
+    <div
+      className="h-screen overflow-y-auto fade-in"
+      style={{ backgroundColor: 'var(--bg)' }}
+    >
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '40px 32px 80px' }}>
 
-        {/* Tab bar */}
+        {/* ── Header ── */}
         <div style={{
           display: 'flex',
-          gap: 4,
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          marginBottom: 28,
+        }}>
+          <div>
+            <h1 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.6rem',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.01em',
+            }}>
+              Settings
+            </h1>
+            <p style={{
+              fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
+              fontSize: '0.85rem',
+              color: 'var(--text-muted)',
+              marginTop: 2,
+            }}>
+              Preferences &amp; configuration
+            </p>
+          </div>
+          <WarmButton variant="ghost" onClick={onClose}>← Back</WarmButton>
+        </div>
+
+        {/* ── Tab bar ── */}
+        <div style={{
+          display: 'flex',
+          gap: 2,
           marginBottom: 24,
           padding: 4,
-          borderRadius: 'var(--radius)',
+          borderRadius: 11,
           backgroundColor: 'var(--bg-sidebar)',
+          border: '1px solid var(--border)',
         }}>
           {tabs.map((tab) => (
             <button
@@ -205,13 +209,14 @@ export default function Settings({ onClose }: Props) {
                 flex: 1,
                 padding: '8px 0',
                 borderRadius: 8,
-                fontSize: '0.875rem',
+                fontSize: '0.82rem',
                 fontWeight: settingsTab === tab.id ? 500 : 400,
                 backgroundColor: settingsTab === tab.id ? 'var(--bg-active)' : 'transparent',
                 color: settingsTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)',
-                border: 'none',
+                border: settingsTab === tab.id ? '1px solid var(--border)' : '1px solid transparent',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-ui)',
+                transition: 'all 0.15s',
               }}
             >
               {tab.label}
@@ -219,258 +224,185 @@ export default function Settings({ onClose }: Props) {
           ))}
         </div>
 
-        {/* Tab content */}
+        {/* ══════════════════════════════════════
+            TAB: SHORTCUTS
+        ══════════════════════════════════════ */}
         {settingsTab === 'shortcuts' && (
           <Card>
-            <SectionHeading>Keyboard Shortcuts</SectionHeading>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {shortcuts.map((shortcut) => (
-                <div
-                  key={shortcut.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    backgroundColor: recordingId === shortcut.id ? 'var(--bg-active)' : 'transparent',
-                    border: recordingId === shortcut.id ? '1px solid var(--accent)' : '1px solid transparent',
-                  }}
-                  onClick={() => setRecordingId(recordingId === shortcut.id ? null : shortcut.id)}
-                >
-                  <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>{shortcut.label}</span>
-                  <kbd
+            <SectionHeading>Keyboard shortcuts</SectionHeading>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 14, fontFamily: 'var(--font-display)', fontStyle: 'italic' }}>
+              Click a shortcut to reassign it.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {shortcuts.map((shortcut) => {
+                const isRecording = recordingId === shortcut.id;
+                return (
+                  <div
+                    key={shortcut.id}
+                    onClick={() => setRecordingId(isRecording ? null : shortcut.id)}
                     style={{
-                      padding: '2px 8px',
-                      borderRadius: 6,
-                      fontSize: '0.75rem',
-                      fontFamily: 'var(--font-mono)',
-                      backgroundColor: recordingId === shortcut.id ? 'var(--accent)' : 'var(--bg-hover)',
-                      color: recordingId === shortcut.id ? '#fff' : 'var(--text-primary)',
-                      border: '1px solid var(--border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      backgroundColor: isRecording ? 'rgba(193,127,58,0.08)' : 'transparent',
+                      border: isRecording ? '1px solid var(--accent)' : '1px solid transparent',
+                      transition: 'all 0.12s',
                     }}
+                    onMouseEnter={(e) => { if (!isRecording) e.currentTarget.style.backgroundColor = 'var(--bg-hover)'; }}
+                    onMouseLeave={(e) => { if (!isRecording) e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
-                    {recordingId === shortcut.id ? 'Press keys...' : shortcut.keys}
-                  </kbd>
-                </div>
-              ))}
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                      {shortcut.label}
+                    </span>
+                    <kbd style={{
+                      padding: '3px 10px',
+                      borderRadius: 6,
+                      fontSize: '0.72rem',
+                      fontFamily: 'var(--font-mono)',
+                      backgroundColor: isRecording ? 'var(--accent)' : 'var(--bg-hover)',
+                      color: isRecording ? '#fff' : 'var(--text-secondary)',
+                      border: '1px solid var(--border)',
+                      letterSpacing: '0.02em',
+                      transition: 'all 0.12s',
+                    }}>
+                      {isRecording ? 'Press keys…' : shortcut.keys}
+                    </kbd>
+                  </div>
+                );
+              })}
             </div>
-            <button
-              onClick={resetShortcuts}
-              style={{
-                marginTop: 16,
-                padding: '10px 20px',
-                borderRadius: 8,
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                backgroundColor: 'transparent',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border)',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-ui)',
-              }}
-            >
-              Reset to Defaults
-            </button>
+            <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+              <WarmButton variant="ghost" onClick={resetShortcuts}>Reset to defaults</WarmButton>
+            </div>
           </Card>
         )}
 
+        {/* ══════════════════════════════════════
+            TAB: SERVER
+        ══════════════════════════════════════ */}
         {settingsTab === 'server' && (
           <>
-            {/* Server Status Card */}
+            {/* Status overview */}
             <Card>
-              <SectionHeading>Server Status</SectionHeading>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <InfoRow label="Status" value={
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <SectionHeading>Server status</SectionHeading>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: serverStatus.connected ? 0 : 14 }}>
+                <InfoCell label="Status">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                     <span style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      backgroundColor: serverStatus.connected ? '#22c55e' : '#ef4444',
+                      width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                      backgroundColor: serverStatus.connected ? '#6EE7A0' : '#F87171',
+                      boxShadow: `0 0 0 2px ${serverStatus.connected ? 'rgba(110,231,160,0.25)' : 'rgba(248,113,113,0.25)'}`,
                     }} />
                     {serverStatus.connected ? 'Connected' : 'Offline'}
                   </span>
-                } />
-                <InfoRow label="Server URL" value={
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{settings.serverUrl || '—'}</span>
+                </InfoCell>
+                <InfoCell label="Connected clients">
+                  {String(serverStatus.clients ?? '—')}
+                </InfoCell>
+                <InfoCell label="Free storage">
+                  {formatBytes(serverStatus.storage?.free ?? 0)}
+                </InfoCell>
+                <InfoCell label="Last sync">
+                  {formatTimeAgo(serverStatus.lastSync)}
+                </InfoCell>
+                <InfoCell label="Server URL">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.8rem' }}>
+                      {settings.serverUrl || '—'}
+                    </span>
                     {settings.serverUrl && (
-                      <button
-                        onClick={() => { navigator.clipboard.writeText(settings.serverUrl); toast.success('URL copied'); }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          fontSize: '0.75rem',
-                          color: 'var(--accent)',
-                          cursor: 'pointer',
-                          padding: 0,
-                        }}
-                      >
+                      <InlineAction onClick={() => { navigator.clipboard.writeText(settings.serverUrl); toast.success('URL copied'); }}>
                         Copy
-                      </button>
+                      </InlineAction>
                     )}
                   </span>
-                } />
-                <InfoRow label="Connected Clients" value={String(serverStatus.clients)} />
-                <InfoRow label="Free Storage" value={formatBytes(serverStatus.storage.free)} />
-                <InfoRow label="Last Sync" value={formatTimeAgo(serverStatus.lastSync)} />
-                <InfoRow label="Storage Path" value={serverStatus.storage.path || '—'} />
+                </InfoCell>
+                <InfoCell label="Storage path">
+                  {serverStatus.storage?.path || '—'}
+                </InfoCell>
               </div>
               {!serverStatus.connected && (
                 <div style={{
-                  marginTop: 16,
-                  padding: 12,
+                  padding: '10px 14px',
                   borderRadius: 8,
-                  fontSize: '0.875rem',
-                  backgroundColor: 'var(--bg-hover)',
+                  fontSize: '0.82rem',
+                  backgroundColor: 'rgba(248,113,113,0.08)',
                   color: 'var(--text-secondary)',
+                  border: '1px solid rgba(248,113,113,0.18)',
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
                 }}>
-                  Working offline — changes will sync when server is available
+                  Working offline — changes will sync when the server is available.
                 </div>
               )}
             </Card>
 
-            {/* Server Configuration */}
+            {/* Configuration */}
             <Card>
-              <SectionHeading>Server Configuration</SectionHeading>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 4, color: 'var(--text-secondary)' }}>Server URL</label>
-                  <input
+              <SectionHeading>Configuration</SectionHeading>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                <FieldGroup label="Server URL">
+                  <WarmInput
                     type="url"
                     value={serverUrl}
                     onChange={(e) => setServerUrl(e.target.value)}
                     placeholder="http://localhost:3000"
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: 8,
-                      fontSize: '0.875rem',
-                      outline: 'none',
-                      backgroundColor: 'var(--bg)',
-                      color: 'var(--text-primary)',
-                      border: '1px solid var(--border)',
-                      fontFamily: 'var(--font-ui)',
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                    onBlur={(e) => (e.target.style.borderColor = '')}
                   />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 4, color: 'var(--text-secondary)' }}>API Key</label>
+                </FieldGroup>
+
+                <FieldGroup label="API key">
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <input
+                    <WarmInput
                       type={showApiKey ? 'text' : 'password'}
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
-                      style={{
-                        flex: 1,
-                        padding: '10px 14px',
-                        borderRadius: 8,
-                        fontSize: '0.875rem',
-                        outline: 'none',
-                        backgroundColor: 'var(--bg)',
-                        color: 'var(--text-primary)',
-                        border: '1px solid var(--border)',
-                        fontFamily: 'var(--font-ui)',
-                      }}
-                      onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                      onBlur={(e) => (e.target.style.borderColor = '')}
+                      style={{ flex: 1 }}
                     />
-                    <button
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      style={{
-                        padding: '10px 14px',
-                        borderRadius: 8,
-                        fontSize: '0.75rem',
-                        backgroundColor: 'transparent',
-                        border: '1px solid var(--border)',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        fontFamily: 'var(--font-ui)',
-                      }}
-                    >
+                    <WarmButton variant="ghost" onClick={() => setShowApiKey(!showApiKey)}>
                       {showApiKey ? 'Hide' : 'Show'}
-                    </button>
-                    <button
-                      onClick={() => { navigator.clipboard.writeText(apiKey); toast.success('API key copied'); }}
-                      style={{
-                        padding: '10px 14px',
-                        borderRadius: 8,
-                        fontSize: '0.75rem',
-                        backgroundColor: 'transparent',
-                        border: '1px solid var(--border)',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        fontFamily: 'var(--font-ui)',
-                      }}
-                    >
+                    </WarmButton>
+                    <WarmButton variant="ghost" onClick={() => { navigator.clipboard.writeText(apiKey); toast.success('API key copied'); }}>
                       Copy
-                    </button>
+                    </WarmButton>
                   </div>
-                </div>
+                </FieldGroup>
+
                 {serverUpdateMsg && (
-                  <div
-                    style={{
-                      fontSize: '0.875rem',
-                      padding: '10px 14px',
-                      borderRadius: 8,
-                      backgroundColor: serverUpdateStatus === 'error' ? '#FEF2F2' : '#F0FDF4',
-                      color: serverUpdateStatus === 'error' ? '#EF4444' : '#10B981',
-                    }}
-                  >
+                  <StatusBanner type={serverUpdateStatus === 'error' ? 'error' : 'success'}>
                     {serverUpdateMsg}
-                  </div>
+                  </StatusBanner>
                 )}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <WarmButton
+                    variant="primary"
                     onClick={handleServerUpdate}
                     disabled={serverUpdateStatus === 'checking'}
-                    style={{
-                      padding: '10px 20px',
-                      borderRadius: 8,
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      backgroundColor: 'var(--accent)',
-                      color: '#fff',
-                      border: 'none',
-                      cursor: 'pointer',
-                      opacity: serverUpdateStatus === 'checking' ? 0.5 : 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      fontFamily: 'var(--font-ui)',
-                    }}
                   >
-                    {serverUpdateStatus === 'checking' && (
-                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    )}
-                    {serverUpdateStatus === 'checking' ? 'Checking...' : 'Update Connection'}
-                  </button>
-                  <button
+                    {serverUpdateStatus === 'checking' ? (
+                      <>
+                        <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Checking…
+                      </>
+                    ) : 'Update connection'}
+                  </WarmButton>
+                  <WarmButton
+                    variant="ghost"
                     onClick={() => {
                       checkServerHealth(settings.serverUrl, settings.apiKey).then((result) => {
                         setServerStatus({ connected: result.ok, ...(result.data ? { clients: result.data.clients, storage: result.data.storage } : {}) });
                         toast.success(result.ok ? 'Server reachable' : 'Server unreachable');
                       });
                     }}
-                    style={{
-                      padding: '10px 20px',
-                      borderRadius: 8,
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      backgroundColor: 'transparent',
-                      color: 'var(--text-primary)',
-                      border: '1px solid var(--border)',
-                      cursor: 'pointer',
-                      fontFamily: 'var(--font-ui)',
-                    }}
                   >
                     Reconnect
-                  </button>
-                  <button
+                  </WarmButton>
+                  <WarmButton
+                    variant="danger"
                     onClick={() => {
                       setSettings({ serverUrl: '', apiKey: '', offlineOnly: true });
                       saveSettings({ serverUrl: '', apiKey: '', offlineOnly: true });
@@ -479,183 +411,210 @@ export default function Settings({ onClose }: Props) {
                       setServerStatus({ connected: false });
                       toast.success('Disconnected from server');
                     }}
-                    style={{
-                      padding: '10px 20px',
-                      borderRadius: 8,
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      backgroundColor: '#EF4444',
-                      color: '#fff',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontFamily: 'var(--font-ui)',
-                    }}
                   >
                     Disconnect
-                  </button>
+                  </WarmButton>
                 </div>
               </div>
             </Card>
           </>
         )}
 
+        {/* ══════════════════════════════════════
+            TAB: GENERAL
+        ══════════════════════════════════════ */}
         {settingsTab === 'general' && (
           <>
             <Card>
               <SectionHeading>Appearance</SectionHeading>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 8, color: 'var(--text-secondary)' }}>Theme</label>
+
+              <FieldGroup label="Theme" style={{ marginBottom: 18 }}>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {(['light', 'dark', 'system'] as ThemeMode[]).map((t) => (
                     <button
                       key={t}
                       onClick={() => handleThemeChange(t)}
                       style={{
-                        padding: '10px 20px',
+                        padding: '8px 18px',
                         borderRadius: 8,
-                        fontSize: '0.875rem',
+                        fontSize: '0.82rem',
                         fontWeight: 500,
                         textTransform: 'capitalize',
                         backgroundColor: settings.theme === t ? 'var(--accent)' : 'transparent',
-                        color: settings.theme === t ? '#fff' : 'var(--text-primary)',
-                        border: settings.theme === t ? 'none' : '1px solid var(--border)',
+                        color: settings.theme === t ? '#fff' : 'var(--text-secondary)',
+                        border: settings.theme === t ? '1px solid transparent' : '1px solid var(--border)',
                         cursor: 'pointer',
                         fontFamily: 'var(--font-ui)',
+                        transition: 'all 0.15s',
                       }}
                     >
                       {t}
                     </button>
                   ))}
                 </div>
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 8, color: 'var(--text-secondary)' }}>
-                  Editor Font Size: {settings.fontSize}px
-                </label>
-                <input type="range" min={12} max={24} value={settings.fontSize}
+              </FieldGroup>
+
+              <FieldGroup label={`Editor font size — ${settings.fontSize}px`} style={{ marginBottom: 18 }}>
+                <input
+                  type="range" min={12} max={24} value={settings.fontSize}
                   onChange={(e) => handleFontSizeChange(Number(e.target.value))}
                   style={{ width: '100%', accentColor: 'var(--accent)' }}
                 />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 8, color: 'var(--text-secondary)' }}>
-                  Auto-save Interval: {(settings.autoSaveInterval / 1000).toFixed(1)}s
-                </label>
-                <input type="range" min={500} max={5000} step={250} value={settings.autoSaveInterval}
+              </FieldGroup>
+
+              <FieldGroup label={`Auto-save interval — ${(settings.autoSaveInterval / 1000).toFixed(1)}s`}>
+                <input
+                  type="range" min={500} max={5000} step={250} value={settings.autoSaveInterval}
                   onChange={(e) => handleAutoSaveChange(Number(e.target.value))}
                   style={{ width: '100%', accentColor: 'var(--accent)' }}
                 />
-              </div>
+              </FieldGroup>
             </Card>
 
             <Card>
               <SectionHeading>Data</SectionHeading>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={handleExportNotes}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    backgroundColor: 'var(--accent)',
-                    color: '#fff',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-ui)',
-                  }}>
-                  Export All Notes (ZIP)
-                </button>
-                <button onClick={handleClearCache}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-primary)',
-                    border: '1px solid var(--border)',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-ui)',
-                  }}>
-                  Clear Local Cache
-                </button>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 14, fontFamily: 'var(--font-display)', fontStyle: 'italic' }}>
+                Export your notes or clear the local cache.
+              </p>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <WarmButton variant="primary" onClick={handleExportNotes}>
+                  Export all notes (ZIP)
+                </WarmButton>
+                <WarmButton variant="ghost" onClick={handleClearCache}>
+                  Clear local cache
+                </WarmButton>
               </div>
             </Card>
 
             <Card>
               <SectionHeading>Reset</SectionHeading>
-              <p style={{ fontSize: '0.875rem', marginBottom: 12, color: 'var(--text-secondary)' }}>
+              <p style={{ fontSize: '0.82rem', marginBottom: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                 Reset all settings, shortcuts, and UI preferences to their defaults. This will reload the app.
               </p>
-              <button
-                onClick={async () => {
-                  await resetAllSettings();
-                  window.location.reload();
-                }}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: 8,
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  backgroundColor: '#EF4444',
-                  color: '#fff',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-ui)',
-                }}
+              <WarmButton
+                variant="danger"
+                onClick={async () => { await resetAllSettings(); window.location.reload(); }}
               >
-                Reset All Settings to Defaults
-              </button>
+                Reset all settings to defaults
+              </WarmButton>
             </Card>
           </>
         )}
 
+        {/* ══════════════════════════════════════
+            TAB: ABOUT
+        ══════════════════════════════════════ */}
         {settingsTab === 'about' && (
           <Card>
-            <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <div style={{ textAlign: 'center', padding: '40px 0 32px' }}>
+              {/* Logo mark */}
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 56,
-                height: 56,
-                borderRadius: 14,
-                backgroundColor: 'var(--accent)',
-                marginBottom: 16,
+                width: 64,
+                height: 64,
+                borderRadius: 18,
+                background: 'linear-gradient(135deg, #2C2420 0%, #3D302A 100%)',
+                marginBottom: 20,
+                boxShadow: '0 4px 20px rgba(44,36,32,0.20)',
               }}>
-                <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fff' }}>S</span>
+                <span style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '1.6rem',
+                  fontWeight: 600,
+                  color: '#D4975A',
+                  letterSpacing: '0.04em',
+                }}>S</span>
               </div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 4, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>SHUKI</h2>
-              <p style={{ fontSize: '0.875rem', marginBottom: 16, color: 'var(--text-secondary)' }}>
-                v1.0.0
+
+              <h2 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.6rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                letterSpacing: '0.06em',
+                marginBottom: 6,
+              }}>
+                SH<span style={{ color: 'var(--accent)' }}>U</span>KI
+              </h2>
+
+              <p style={{
+                fontFamily: 'var(--font-display)',
+                fontStyle: 'italic',
+                fontSize: '0.85rem',
+                color: 'var(--text-muted)',
+                marginBottom: 20,
+              }}>
+                Your notes, your server, your peace of mind.
               </p>
-              <p style={{ fontSize: '0.875rem', marginBottom: 16, color: 'var(--text-secondary)' }}>
-                Self-hosted note-taking with real-time sync
-              </p>
-              <a
-                href="https://github.com/techbygiusi/shuki"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: '2px' }}
-              >
-                GitHub Repository
-              </a>
+
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '5px 14px',
+                borderRadius: 999,
+                backgroundColor: 'var(--bg-hover)',
+                border: '1px solid var(--border)',
+                fontSize: '0.75rem',
+                color: 'var(--text-muted)',
+                marginBottom: 24,
+              }}>
+                <span>v1.0.0</span>
+                <span style={{ color: 'var(--border)' }}>·</span>
+                <span>Self-hosted notes with real-time sync</span>
+              </div>
+
+              <div style={{ marginBottom: 0 }}>
+                <a
+                  href="https://github.com/techbygiusi/shuki"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: '0.82rem',
+                    fontWeight: 500,
+                    color: 'var(--accent)',
+                    textDecoration: 'none',
+                    padding: '8px 18px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    transition: 'background 0.12s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  {/* GitHub icon */}
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                  </svg>
+                  GitHub repository
+                </a>
+              </div>
             </div>
           </Card>
         )}
+
       </div>
     </div>
   );
 }
 
+/* ─────────────────────────────────────────────────
+   Design primitives
+───────────────────────────────────────────────── */
+
 function Card({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
       backgroundColor: 'var(--bg-sidebar)',
-      borderRadius: 'var(--radius)',
+      borderRadius: 12,
       border: '1px solid var(--border)',
-      padding: 24,
-      marginBottom: 16,
+      padding: '22px 24px',
+      marginBottom: 14,
     }}>
       {children}
     </div>
@@ -665,9 +624,9 @@ function Card({ children }: { children: React.ReactNode }) {
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <h2 style={{
-      fontSize: '0.7rem',
-      fontWeight: 600,
-      letterSpacing: '0.08em',
+      fontSize: '0.6rem',
+      fontWeight: 500,
+      letterSpacing: '0.14em',
       textTransform: 'uppercase',
       color: 'var(--text-muted)',
       marginBottom: 16,
@@ -678,25 +637,214 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
+function FieldGroup({
+  label,
+  children,
+  style,
+}: {
+  label: string;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
   return (
-    <div>
-      <span style={{
-        fontSize: '0.7rem',
-        fontWeight: 600,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        color: 'var(--text-muted)',
+    <div style={style}>
+      <label style={{
         display: 'block',
-        marginBottom: 4,
-      }}>{label}</span>
-      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{value}</span>
+        fontSize: '0.78rem',
+        fontWeight: 500,
+        color: 'var(--text-secondary)',
+        marginBottom: 7,
+        fontFamily: 'var(--font-ui)',
+      }}>
+        {label}
+      </label>
+      {children}
     </div>
   );
 }
 
+function WarmInput({
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  style,
+}: {
+  type?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      style={{
+        width: '100%',
+        padding: '9px 13px',
+        borderRadius: 8,
+        fontSize: '0.85rem',
+        outline: 'none',
+        backgroundColor: 'var(--bg)',
+        color: 'var(--text-primary)',
+        border: '1px solid var(--border)',
+        fontFamily: 'var(--font-ui)',
+        transition: 'border-color 0.15s, box-shadow 0.15s',
+        ...style,
+      }}
+      onFocus={(e) => {
+        e.target.style.borderColor = 'var(--accent)';
+        e.target.style.boxShadow = '0 0 0 3px rgba(193,127,58,0.10)';
+      }}
+      onBlur={(e) => {
+        e.target.style.borderColor = 'var(--border)';
+        e.target.style.boxShadow = 'none';
+      }}
+    />
+  );
+}
+
+type ButtonVariant = 'primary' | 'ghost' | 'danger';
+
+function WarmButton({
+  variant = 'ghost',
+  onClick,
+  disabled,
+  children,
+}: {
+  variant?: ButtonVariant;
+  onClick?: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  const base: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 7,
+    padding: '9px 18px',
+    borderRadius: 8,
+    fontSize: '0.82rem',
+    fontWeight: 500,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontFamily: 'var(--font-ui)',
+    border: 'none',
+    transition: 'opacity 0.15s, background 0.12s',
+    opacity: disabled ? 0.5 : 1,
+    whiteSpace: 'nowrap' as const,
+  };
+
+  const styles: Record<ButtonVariant, React.CSSProperties> = {
+    primary: {
+      backgroundColor: hovered ? 'var(--accent-hover)' : 'var(--accent)',
+      color: '#fff',
+    },
+    ghost: {
+      backgroundColor: hovered ? 'var(--bg-hover)' : 'transparent',
+      color: 'var(--text-primary)',
+      border: '1px solid var(--border)',
+    },
+    danger: {
+      backgroundColor: hovered ? '#c0392b' : '#E05252',
+      color: '#fff',
+    },
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ ...base, ...styles[variant] }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function InfoCell({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      padding: '12px 14px',
+      backgroundColor: 'var(--bg)',
+      borderRadius: 8,
+      border: '1px solid var(--border)',
+    }}>
+      <div style={{
+        fontSize: '0.6rem',
+        fontWeight: 500,
+        letterSpacing: '0.13em',
+        textTransform: 'uppercase',
+        color: 'var(--text-muted)',
+        marginBottom: 6,
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: '0.88rem',
+        fontWeight: 500,
+        color: 'var(--text-primary)',
+        fontFamily: 'var(--font-display)',
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function InlineAction({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: 'none',
+        border: 'none',
+        fontSize: '0.72rem',
+        color: hovered ? 'var(--accent-hover)' : 'var(--accent)',
+        cursor: 'pointer',
+        padding: 0,
+        fontFamily: 'var(--font-ui)',
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function StatusBanner({ type, children }: { type: 'success' | 'error'; children: React.ReactNode }) {
+  return (
+    <div style={{
+      padding: '10px 14px',
+      borderRadius: 8,
+      fontSize: '0.82rem',
+      fontFamily: 'var(--font-display)',
+      fontStyle: 'italic',
+      backgroundColor: type === 'error'
+        ? 'rgba(248,113,113,0.10)'
+        : 'rgba(110,231,160,0.10)',
+      color: type === 'error' ? '#E05252' : '#3D8B62',
+      border: `1px solid ${type === 'error' ? 'rgba(248,113,113,0.25)' : 'rgba(110,231,160,0.25)'}`,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────
+   Utilities
+───────────────────────────────────────────────── */
+
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (!bytes || bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
